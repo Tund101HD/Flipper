@@ -18,7 +18,7 @@ int GAMES_LEFT;
 
 
 void setup() {
-    Wire.begin(); //TODO Give Master I2C-Adress 1 and Slave adr 2 to use Wire.request(1); !!
+    Wire.begin(); 
     Serial.begin(9600);
 
 
