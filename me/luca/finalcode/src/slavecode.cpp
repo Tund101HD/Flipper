@@ -9,13 +9,11 @@
 #include "NoDelay.h"
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-
-
 boolean GAMESTATUS = false;
 boolean inst_start_game();
 boolean inst_stop_game();
 
-void onRecieve(int p);
+void onReceive(int p);
 void onRequest(int p);
 
 File save;
@@ -34,14 +32,14 @@ unsigned long previousMillis = 0;
 void setup() {
     Serial.begin(9600);
     Wire.begin(1);
-    Wire.onReceive(onRecieve);
+    Wire.onReceive(onReceive);
     Wire.onReceive(onRequest);
     lcd.init();
     lcd.setBacklight(true);
 
     pinMode(3, INPUT_PULLUP); //Sneaky For-Loop block work around :DD (Ich wollte das hochzählen unbedingt haben.)
 
-    if(!SD.begin(12)){
+    if(!SD.begin(5)){
         Serial.println("[Severe Error] SD-Karte konnte nicht initalisiert werden!");
     }
 
@@ -56,26 +54,35 @@ void loop() {
                 continue;
             }
 
-            previousMillis = millis();
             if(PREPAY > 0){
                 lcd.clear();
                 lcd.print("Knopf druecken!");
                 lcd.setCursor(0, 1);
                 lcd.print("Uebrige Spiele: "+ String(PREPAY));
+                previousMillis = millis();
+                while(millis()-previousMillis < (6* One_Second_Pause)){
+                    if(digitalRead(3) == LOW){  //Pin 3 ist LOW wenn das game starten soll!
+                        GAMESTATUS = inst_start_game();
+                        break;
+                    }
+
+                }
 
             }else{
                 lcd.clear();
                 lcd.print("1.Muenze(n) einwerfen");
                 lcd.setCursor(0, 1);
                 lcd.print("2.Knopf druecken");
-                previousMillis = millis();
-                for(int i = 0; i<5; i++){
-                    while(millis()-previousMillis > Half_Second_Pause){
-                        if(digitalRead(3) == LOW) //Pin 3 ist LOW wenn das game starten soll!
-                            GAMESTATUS = inst_start_game();
-                        break;
-                    }
 
+
+                for(int i = 0; i<5; i++){
+                    previousMillis = millis();
+                    while(millis()-previousMillis < Half_Second_Pause){
+                        if(digitalRead(3) == LOW){
+                            GAMESTATUS = inst_start_game();//Pin 3 ist LOW wenn das game starten soll!
+                            break;
+                        }
+                    }
                     lcd.scrollDisplayLeft();
                 }
             }
@@ -90,7 +97,8 @@ void loop() {
                     lcd.setCursor(0,1);
                     lcd.print(String(minute()) +" min "+String(second())+" sek");
 
-                    while(millis()-previousMillis > One_Second_Pause){
+                    previousMillis = millis();
+                    while(millis()-previousMillis < One_Second_Pause){
                         if(digitalRead(3) == HIGH){
                             //Pin 3 ist HIGH wenn das Game zu Ende ist!
                             GAMESTATUS = inst_stop_game();
@@ -104,7 +112,8 @@ void loop() {
                 lcd.clear();
                 lcd.print("Spiel-Nr. "+String(GAME_NO));
 
-                while(millis()-previousMillis > (13*One_Second_Pause)){
+                previousMillis = millis();
+                while(millis()-previousMillis < (13*One_Second_Pause)){
                     if(digitalRead(3) == HIGH){
                         //Pin 3 ist HIGH wenn das Game zu Ende ist!
                         GAMESTATUS = inst_stop_game();
@@ -115,9 +124,17 @@ void loop() {
                 break;
             case 2:
                 lcd.clear();
-                lcd.print("Uebrige Spiele: "+String(PREPAY));
+                if(PREPAY == 0 ){
+                    lcd_status = 0;
+                    break;
+                }
 
-                while(millis()-previousMillis > (6*One_Second_Pause)){
+                lcd.print("Uebrige Spiele:");
+                lcd.setCursor(0, 1);
+                lcd.print(String(PREPAY));
+
+                previousMillis = millis();
+                while(millis()-previousMillis < (6*One_Second_Pause)){
                     if(digitalRead(3) == HIGH){
                         //Pin 3 ist HIGH wenn das Game zu Ende ist!
                         GAMESTATUS = inst_stop_game();
@@ -130,7 +147,7 @@ void loop() {
     }
 
 
-void onRecieve(int p){
+void onReceive(int p){
     Serial.println("Receiving data.");
 
     byte com[2];
