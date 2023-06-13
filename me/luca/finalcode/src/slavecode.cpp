@@ -38,6 +38,7 @@ void setup() {
     lcd.setBacklight(true);
 
     pinMode(3, INPUT_PULLUP); //Sneaky For-Loop block work around :DD (Ich wollte das hochzählen unbedingt haben.)
+    pinMode(6, OUTPUT);//Transmit-Due-Games pin
 
     if(!SD.begin(5)){
         Serial.println("[Severe Error] SD-Karte konnte nicht initalisiert werden!");
@@ -148,20 +149,24 @@ void loop() {
 
 
 void onReceive(int p){
-    Serial.println("Receiving data.");
-
-    byte com[2];
-    Wire.readBytes(com, sizeof(com));
-
-    PREPAY = int(com[1]); //Menge an übrigen Spielen
-
-    if(com[0] == (byte) 1){
-        GAMESTATUS = inst_stop_game();
-        return;
+    Serial.println("[Log] Receiving data.");
+    if(p == 1){
+        PREPAY = (int) Wire.read();
+        digitalWrite(6, LOW);
     }else{
-        GAMESTATUS = inst_start_game();
-        return;
+        byte com[2];
+        Wire.readBytes(com, sizeof(com));
+        PREPAY = int(com[1]); //Menge an übrigen Spielen
+
+        if(com[0] == (byte) 1){
+            GAMESTATUS = inst_stop_game();
+            return;
+        }else{
+            GAMESTATUS = inst_start_game();
+            return;
+        }
     }
+
 
 
 }
@@ -193,6 +198,7 @@ boolean inst_stop_game(){
 boolean inst_start_game(){
     Serial.println("[Log] Starting Game No. "+ String(++GAME_NO) + "!");
     setTime(0,0,0,0,0,0);
+    digitalWrite(6, HIGH);
     if(PREPAY > 0)
         PREPAY--;
 
