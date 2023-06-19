@@ -38,12 +38,12 @@ void setup() {
     lcd.setBacklight(true);
 
     pinMode(3, INPUT_PULLUP); //Sneaky For-Loop block work around :DD (Ich wollte das hochzählen unbedingt haben.)
-    pinMode(6, OUTPUT);//Transmit-Due-Games pin
+    pinMode(6, OUTPUT); //Transmit Due Games pin
 
     if(!SD.begin(5)){
         Serial.println("[Severe Error] SD-Karte konnte nicht initalisiert werden!");
     }
-
+    digitalWrite(6, LOW);
     previousMillis = millis();
 }
 
@@ -57,8 +57,6 @@ void loop() {
 
             if(PREPAY > 0){
                 lcd.clear();
-                lcd.print("Knopf druecken!");
-                lcd.setCursor(0, 1);
                 lcd.print("Uebrige Spiele: "+ String(PREPAY));
                 previousMillis = millis();
                 while(millis()-previousMillis < (6* One_Second_Pause)){
@@ -73,7 +71,7 @@ void loop() {
                 lcd.clear();
                 lcd.print("1.Muenze(n) einwerfen");
                 lcd.setCursor(0, 1);
-                lcd.print("2.Knopf druecken");
+                lcd.print("2.Los legen");
 
 
                 for(int i = 0; i<5; i++){
@@ -149,24 +147,21 @@ void loop() {
 
 
 void onReceive(int p){
-    Serial.println("[Log] Receiving data.");
-    if(p == 1){
-        PREPAY = (int) Wire.read();
-        digitalWrite(6, LOW);
+    Serial.println("Receiving data.");
+
+    byte com[2];
+    Wire.readBytes(com, sizeof(com));
+    PREPAY = int(com[1]); //Menge an übrigen Spielen
+
+    if(com[0] == (byte) 1){
+        GAMESTATUS = inst_stop_game();
+        return;
     }else{
-        byte com[2];
-        Wire.readBytes(com, sizeof(com));
-        PREPAY = int(com[1]); //Menge an übrigen Spielen
-
-        if(com[0] == (byte) 1){
-            GAMESTATUS = inst_stop_game();
-            return;
-        }else{
+        if(!GAMESTATUS){
             GAMESTATUS = inst_start_game();
-            return;
         }
+        return;
     }
-
 
 
 }
@@ -196,11 +191,11 @@ boolean inst_stop_game(){
 }
 
 boolean inst_start_game(){
-    Serial.println("[Log] Starting Game No. "+ String(++GAME_NO) + "!");
+    GAME_NO+=1;
+    Serial.println("[Log] Starting Game No. "+ String(GAME_NO) + "!");
     setTime(0,0,0,0,0,0);
-    digitalWrite(6, HIGH);
     if(PREPAY > 0)
         PREPAY--;
-
+    digitalWrite(6, HIGH);
     return true;
 }
