@@ -148,22 +148,27 @@ void loop() {
 
 void onReceive(int p){
     Serial.println("Receiving data.");
+    if(p == 2){
+        byte com[2];
+        Wire.readBytes(com, sizeof(com));
+        PREPAY = int(com[1]); //Menge an übrigen Spielen
 
-    byte com[2];
-    Wire.readBytes(com, sizeof(com));
-    PREPAY = int(com[1]); //Menge an übrigen Spielen
-
-    if(com[0] == (byte) 1){
-        GAMESTATUS = inst_stop_game();
-        return;
-    }else{
-        if(!GAMESTATUS){
-            GAMESTATUS = inst_start_game();
+        if(com[0] == (byte) 1){
+            GAMESTATUS = inst_stop_game();
+            return;
+        }else{
+            if(!GAMESTATUS){
+                GAMESTATUS = inst_start_game();
+            }
+            return;
         }
-        return;
+    }else if(p == 3){
+        byte com[3];
+        Wire.readBytes(com, sizeof(com));
+        byte inst = com[0];
+        PREPAY = int(com[1]);
+        GAME_NO = int(com[2]);
     }
-
-
 }
 
 void onRequest(int p){
