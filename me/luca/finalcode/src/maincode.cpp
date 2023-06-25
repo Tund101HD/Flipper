@@ -60,7 +60,15 @@ boolean check_start_init(){
     }
 
     if(money){
-        delay(2000);
+        previousMillis = millis();
+        while(millis()- previousMillis < 2*One_Second_Pause){
+            if(digitalRead(3) == 0){ // 50 CENT
+                GAMES_LEFT+=1;
+            }
+            if(digitalRead(4) == 0){ // 1 EUR
+                GAMES_LEFT+=2;
+            }
+        }
         for (int i = 0; i < 91; ++i) { //Ballarm
             servo.write(i);
         }
