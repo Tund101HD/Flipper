@@ -20,7 +20,7 @@ File save;
 
 
 int points = 0;
-int GAME_NO = 0;
+int GAME = 0;
 int PREPAY = 0;
 int lcd_status = 0;
 
@@ -51,18 +51,18 @@ void loop() {
         while (!GAMESTATUS){
             if(digitalRead(3) == LOW) {
                 //Pin 3 ist LOW wenn das game starten soll!
-                GAMESTATUS = inst_start_game();
+
+                GAMESTATUS =  inst_start_game();
                 continue;
             }
-
             if(PREPAY > 0){
                 lcd.clear();
                 lcd.print("Uebrige Spiele: "+ String(PREPAY));
                 previousMillis = millis();
                 while(millis()-previousMillis < (6* One_Second_Pause)){
                     if(digitalRead(3) == LOW){  //Pin 3 ist LOW wenn das game starten soll!
-                        GAMESTATUS = inst_start_game();
-                        break;
+                        GAMESTATUS =  inst_start_game();
+                        continue;
                     }
 
                 }
@@ -78,8 +78,8 @@ void loop() {
                     previousMillis = millis();
                     while(millis()-previousMillis < Half_Second_Pause){
                         if(digitalRead(3) == LOW){
-                            GAMESTATUS = inst_start_game();//Pin 3 ist LOW wenn das game starten soll!
-                            break;
+                            GAMESTATUS =  inst_start_game();
+                            continue;
                         }
                     }
                     lcd.scrollDisplayLeft();
@@ -109,7 +109,7 @@ void loop() {
                 break;
             case 1:
                 lcd.clear();
-                lcd.print("Spiel-Nr. "+String(GAME_NO));
+                lcd.print("Spiel-Nr. "+String(GAME));
 
                 previousMillis = millis();
                 while(millis()-previousMillis < (13*One_Second_Pause)){
@@ -181,13 +181,13 @@ boolean inst_stop_game(){
 
     if(save){
         save = SD.open("data.txt", FILE_WRITE);
-        if(GAME_NO <10)
-            save.println("Game-Stats #0"+String(GAME_NO)+"; Points: "+ String(points)
-                         +"; Hours: "+String(hour())+" Minutes: "+String(minute())+" Seconds: "+String(second()));
+        if(GAME < 10)
+            save.println("Game-Stats #0" + String(GAME) + "; Points: " + String(points)
+                         + "; Hours: " + String(hour()) + " Minutes: " + String(minute()) + " Seconds: " + String(second()));
 
         else
-            save.println("Game-Stats #"+String(GAME_NO)+"; Points: "+ String(points)
-                         +"; Hours: "+String(hour())+" Minutes: "+String(minute())+" Seconds: "+String(second()));
+            save.println("Game-Stats #" + String(GAME) + "; Points: " + String(points)
+                         + "; Hours: " + String(hour()) + " Minutes: " + String(minute()) + " Seconds: " + String(second()));
         save.close();
     }
 
@@ -196,11 +196,12 @@ boolean inst_stop_game(){
 }
 
 boolean inst_start_game(){
-    GAME_NO+=1;
-    Serial.println("[Log] Starting Game No. "+ String(GAME_NO) + "!");
-    setTime(0,0,0,0,0,0);
-    if(PREPAY > 0)
-        PREPAY--;
-    digitalWrite(6, HIGH);
+    if(!GAMESTATUS){
+        GAME+=1;
+        Serial.println("[Log] Starting Game No. " + String(GAME) + "!");
+        setTime(0,0,0,0,0,0);
+        if(PREPAY > 0)
+            PREPAY--;
+    }
     return true;
 }
