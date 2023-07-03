@@ -35,10 +35,10 @@ void setup() {
 
 void loop() {
     while (!GAMESTATUS){
-        GAMESTATUS = start_phase();
+        GAMESTATUS = check_start_init();
         delay(15);
     }
-        GAMESTATUS = ingame_phase();
+        GAMESTATUS = check_game_over();
     delay(15);
 }
 
