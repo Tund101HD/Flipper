@@ -15,8 +15,8 @@ unsigned long previousMillis = 0;
 
 void transmit_inst(byte b);
 void transmit_aryInst(byte b[2], byte inst);
-boolean start_phase();
-boolean ingame_phase();
+boolean check_start_init();
+boolean check_game_over();
 
 void setup() {
     Serial.begin(9600);
